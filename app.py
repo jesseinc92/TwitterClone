@@ -213,29 +213,31 @@ def stop_following(follow_id):
 def profile(user_id):
     """Update profile for current user."""
 
-    user = User.query.get_or_404(user_id)
-    form = ProfileEditForm(obj=user)
-    
-    if form.validate_on_submit():
+    if g.user:
+        user = User.query.get_or_404(user_id)
+        form = ProfileEditForm(obj=user)
         
-        if user.authenticate(user.username, form.password.data):
-            user.username = form.username.data
-            user.email = form.email.data
-            user.image_url = form.image_url.data if len(form.image_url.data) > 0 else None
-            user.header_image_url = form.header_image_url.data if len(form.header_image_url.data) > 0 else None
-            user.bio = form.bio.data
+        if form.validate_on_submit():
             
-            db.session.commit()
+            if user.authenticate(user.username, form.password.data):
+                user.username = form.username.data
+                user.email = form.email.data
+                user.image_url = form.image_url.data if len(form.image_url.data) > 0 else None
+                user.header_image_url = form.header_image_url.data if len(form.header_image_url.data) > 0 else None
+                user.bio = form.bio.data
+                
+                db.session.commit()
+            
+                return redirect(f'/users/{user_id}')
+            
+            else:
+                flash('Incorrect password!', 'danger')
+                return redirect('/')
         
-            return redirect(f'/users/{user_id}')
-        
-        else:
-            flash('Incorrect password!', 'danger')
-            return redirect('/')
+        return render_template('users/edit.html', form=form, user_id=user_id)
     
-    return render_template('users/edit.html', form=form, user_id=user_id)
+    return redirect('/login')
     
-
 
 @app.route('/users/delete', methods=["POST"])
 def delete_user():
@@ -318,9 +320,10 @@ def homepage():
         messages = (Message
                     .query
                     .order_by(Message.timestamp.desc())
-                    .limit(100)
+                    #.limit(100)
                     .all())
-
+        
+        
         return render_template('home.html', messages=messages)
 
     else:

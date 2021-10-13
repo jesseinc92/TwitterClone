@@ -40,7 +40,10 @@
 
     <div class="col-lg-6 col-md-8 col-sm-12">
       <ul class="list-group" id="messages">
-        {% for msg in messages %}
+        {% for msg in messages
+              if g.user in msg.user.followers or msg.user == g.user %}
+
+          {% if loop.index <= 100 %}
           <li class="list-group-item">
             <a href="/messages/{{ msg.id  }}" class="message-link"/>
             <a href="/users/{{ msg.user.id }}">
@@ -61,6 +64,7 @@
               </button>
             </form>
           </li>
+          {% endif %}
         {% endfor %}
       </ul>
     </div>
