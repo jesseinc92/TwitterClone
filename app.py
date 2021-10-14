@@ -5,7 +5,7 @@ from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
 from forms import UserAddForm, LoginForm, MessageForm, ProfileEditForm
-from models import db, connect_db, User, Message
+from models import db, connect_db, User, Message, Likes
 
 CURR_USER_KEY = "curr_user"
 
@@ -179,6 +179,41 @@ def users_followers(user_id):
     return render_template('users/followers.html', user=user)
 
 
+@app.route('/users/<int:user_id>/likes')
+def user_likes(user_id):
+    """show list of liked messages."""
+    
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect('/')
+    
+    user = User.query.get_or_404(user_id)
+    return render_template('likes/show.html', user=user)
+
+
+@app.route('/users/add_like/<int:message_id>', methods=['POST'])
+def add_like(message_id):
+    """Add message to likes list of current user."""
+    
+    if g.user:
+    
+        like = Likes.query.filter_by(message_id=message_id).first()    
+        if like:
+            db.session.delete(like)
+            db.session.commit()
+            
+            return redirect('/')
+        
+        new_like = Likes(user_id=g.user.id, message_id=message_id)
+        db.session.add(new_like)
+        db.session.commit()
+        
+        return redirect('/')
+    
+    flash('You are not authorized to do this', 'danger')
+    return redirect('/')
+
+
 @app.route('/users/follow/<int:follow_id>', methods=['POST'])
 def add_follow(follow_id):
     """Add a follow for the currently-logged-in user."""
@@ -323,8 +358,13 @@ def homepage():
                     #.limit(100)
                     .all())
         
+        likes = (Likes
+                 .query
+                 .all())
+    
+        likes_ids = [like.message_id for like in likes]
         
-        return render_template('home.html', messages=messages)
+        return render_template('home.html', messages=messages, likes=likes_ids)
 
     else:
         return render_template('home-anon.html')
