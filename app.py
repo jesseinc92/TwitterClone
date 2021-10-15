@@ -202,7 +202,7 @@ def add_like(message_id):
             db.session.delete(like)
             db.session.commit()
             
-            return redirect('/')
+            return redirect(f'/users/{g.user.id}/likes')
         
         new_like = Likes(user_id=g.user.id, message_id=message_id)
         db.session.add(new_like)

@@ -200,6 +200,9 @@ class Message(db.Model):
     )
 
     user = db.relationship('User')
+    
+    def __repr__(self):
+        return f'<Message text={self.text} timestamp={self.timestamp}>'
 
 
 def connect_db(app):
